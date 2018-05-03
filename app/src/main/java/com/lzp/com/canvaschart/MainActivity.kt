@@ -2,8 +2,8 @@ package com.lzp.com.canvaschart
 
 import android.support.v7.app.AppCompatActivity
 import android.os.Bundle
-import com.lzp.com.canvaschart.view.BaseDataAdapter
-import com.lzp.com.canvaschart.view.ChartBean
+import com.lzp.com.canvaschart.base.BaseDataAdapter
+import com.lzp.com.canvaschart.base.ChartBean
 import kotlinx.android.synthetic.main.activity_main.*
 
 class MainActivity : AppCompatActivity() {
@@ -24,19 +24,31 @@ class MainActivity : AppCompatActivity() {
                 ChartBean(70f, "afgy"),
                 ChartBean(90f, "afgy"),
                 ChartBean(40f, "afgy")))
+
+        adapter.addData(listOf(ChartBean(-15f, "afgy"),
+                ChartBean(-27f, "afgy"),
+                ChartBean(-20f, "afgy"),
+                ChartBean(-70f, "afgy"),
+                ChartBean(-20f, "afgy"),
+                ChartBean(-35f, "afgy"),
+                ChartBean(-5f, "afgy"),
+                ChartBean(-70f, "afgy"),
+                ChartBean(-90f, "afgy"),
+                ChartBean(-40f, "afgy")))
+
         canvas_chart.adapter = adapter
-        canvas_chart.setOnClickListener({
-            adapter.addData(listOf(ChartBean(-15f, "afgy"),
-                    ChartBean(-27f, "afgy"),
-                    ChartBean(-20f, "afgy"),
-                    ChartBean(-70f, "afgy"),
-                    ChartBean(-20f, "afgy"),
-                    ChartBean(-35f, "afgy"),
-                    ChartBean(-5f, "afgy"),
-                    ChartBean(-70f, "afgy"),
-                    ChartBean(-90f, "afgy"),
-                    ChartBean(-40f, "afgy")))
-            adapter.notifyDataSetChanged()
-        })
+//        canvas_chart.setOnClickListener({
+//            adapter.addData(listOf(ChartBean(-15f, "afgy"),
+//                    ChartBean(-27f, "afgy"),
+//                    ChartBean(-20f, "afgy"),
+//                    ChartBean(-70f, "afgy"),
+//                    ChartBean(-20f, "afgy"),
+//                    ChartBean(-35f, "afgy"),
+//                    ChartBean(-5f, "afgy"),
+//                    ChartBean(-70f, "afgy"),
+//                    ChartBean(-90f, "afgy"),
+//                    ChartBean(-40f, "afgy")))
+//            adapter.notifyDataSetChanged()
+//        })
     }
 }

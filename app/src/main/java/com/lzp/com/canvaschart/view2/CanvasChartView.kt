@@ -1,4 +1,4 @@
-package com.lzp.com.canvaschart.view
+package com.lzp.com.canvaschart.view2
 
 import android.content.Context
 import android.graphics.*
@@ -94,10 +94,8 @@ class CanvasChartView(context: Context, attributes: AttributeSet?, defStyleAttr:
         super.onDraw(canvas)
         // 绘制X轴和Y轴
         drawXYLine(canvas)
-        if (adapter != null) {
-            // 绘制数据
-            drawData(canvas)
-        }
+        // 绘制数据
+        drawData(canvas)
     }
 
     /**
@@ -119,10 +117,11 @@ class CanvasChartView(context: Context, attributes: AttributeSet?, defStyleAttr:
      * 画X轴
      * */
     private fun drawXLine(canvas: Canvas) {
+        val width = width.toFloat()
         // 计算y方向上的中心位置
         val yCenter = (height - lineWidth) / 2
         // 绘制X轴
-        canvas.drawLine(0f, yCenter, maxWidth.toFloat(), yCenter, paint)
+        canvas.drawLine(0f, yCenter, width, yCenter, paint)
     }
 
     /**
@@ -148,7 +147,7 @@ class CanvasChartView(context: Context, attributes: AttributeSet?, defStyleAttr:
         paint.color = dashLineColor
         paint.strokeWidth = dashLineWidth
         paint.pathEffect = DashPathEffect(floatArrayOf(10f, 10f), 1f)
-        while (index < Math.max(xLineMarkCount, adapter?.maxDataCount ?: 0)) {
+        while (index < xLineMarkCount) {
             val startY = xItemSpace * index
             val path = Path()
             path.moveTo(startY, 0f)
@@ -233,7 +232,7 @@ class CanvasChartView(context: Context, attributes: AttributeSet?, defStyleAttr:
             canvas.drawText(text, xPos - textWidth / 2, yPos - dotWidth - fontMetrics.descent - textSpace, paint)
         } else {
             // 要把文字自带的间距减去，统一和圆点之间的间距
-            canvas.drawText(text, xPos - textWidth / 2, yPos + dotWidth - offset + textSpace, paint)
+            canvas.drawText(text, xPos - textWidth / 2, yPos + dotWidth  - offset + textSpace, paint)
         }
     }
 

@@ -1,4 +1,4 @@
-package com.lzp.com.canvaschart.view
+package com.lzp.com.canvaschart.base
 
 import java.util.*
 
@@ -10,6 +10,11 @@ import java.util.*
 class BaseDataAdapter : Observable() {
 
     /**
+     * 最大长度
+     * */
+    var maxDataCount: Int = 0
+
+    /**
      * 保存数据
      * */
     private val dataList: ArrayList<List<ChartBean>> = ArrayList()
@@ -18,6 +23,9 @@ class BaseDataAdapter : Observable() {
      * 添加数据
      * */
     fun addData(data: List<ChartBean>) {
+        if (data.size > maxDataCount){
+            maxDataCount = data.size
+        }
         dataList.add(data)
         notifyDataSetChanged()
     }
