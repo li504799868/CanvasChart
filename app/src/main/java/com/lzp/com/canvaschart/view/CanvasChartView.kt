@@ -95,7 +95,7 @@ class CanvasChartView(context: Context, attributes: AttributeSet?, defStyleAttr:
     /**
      * 文字和圆点之间的间距
      * */
-    var textSpace: Int = 10
+    var textSpace: Int = 0
 
     /**
      * 数据适配器
@@ -194,7 +194,7 @@ class CanvasChartView(context: Context, attributes: AttributeSet?, defStyleAttr:
     /**
      * 绘制一条数据曲线
      * */
-    private fun drawItemData(canvas: Canvas, data: List<Int>) {
+    private fun drawItemData(canvas: Canvas, data: List<ChartBean>) {
         // 通过x轴的刻度间隔，计算x轴坐标
         val xItemSpace = width / xLineMarkCount
         val path = Path()
@@ -226,9 +226,9 @@ class CanvasChartView(context: Context, attributes: AttributeSet?, defStyleAttr:
     /**
      * 计算每一个数据点在Y轴上的坐标
      * */
-    private fun calculateYPosition(value: Int): Float {
+    private fun calculateYPosition(value: ChartBean): Float {
         // 计算比例
-        val scale = value.toFloat() / yLineMax
+        val scale = value.number / yLineMax
         // 计算y方向上的中心位置
         val yCenter = (height - lineWidth) / 2
         // 如果小于0
@@ -238,21 +238,21 @@ class CanvasChartView(context: Context, attributes: AttributeSet?, defStyleAttr:
     /**
      * 绘制文字
      * */
-    private fun drawText(canvas: Canvas, item: Int, xPos: Float, yPos: Float) {
-        val text = item.toString()
+    private fun drawText(canvas: Canvas, item: ChartBean, xPos: Float, yPos: Float) {
+        val text = item.text
         paint.textSize = textSize
         paint.color = textColor
         paint.style = Paint.Style.FILL
         val textWidth = paint.measureText(text)
+        val fontMetrics = paint.fontMetrics
         // 文字自带的间距，不理解的可以查一下：如何绘制文字居中
-        val offset = Math.abs(paint.ascent()) - paint.descent()
-        if (item > 0) {
+        val offset = fontMetrics.ascent + (fontMetrics.ascent - fontMetrics.top)
+        if (item.number > 0) {
             // 要把文字自带的间距减去，统一和圆点之间的间距
-            canvas.drawText(text, xPos - textWidth / 2, yPos - textSize + offset - textSpace, paint)
-        }
-        else{
+            canvas.drawText(text, xPos - textWidth / 2, yPos - dotWidth - fontMetrics.descent - textSpace, paint)
+        } else {
             // 要把文字自带的间距减去，统一和圆点之间的间距
-            canvas.drawText(text, xPos - textWidth / 2, yPos + dotWidth + offset + textSpace, paint)
+            canvas.drawText(text, xPos - textWidth / 2, yPos + dotWidth  - offset + textSpace, paint)
         }
     }
 

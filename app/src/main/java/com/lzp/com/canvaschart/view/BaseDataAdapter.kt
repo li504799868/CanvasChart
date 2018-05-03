@@ -12,12 +12,12 @@ class BaseDataAdapter : Observable() {
     /**
      * 保存数据
      * */
-    private val dataList: ArrayList<List<Int>> = ArrayList()
+    private val dataList: ArrayList<List<ChartBean>> = ArrayList()
 
     /**
      * 添加数据
      * */
-    fun addData(data: List<Int>) {
+    fun addData(data: List<ChartBean>) {
         dataList.add(data)
         notifyDataSetChanged()
     }
@@ -27,12 +27,12 @@ class BaseDataAdapter : Observable() {
         notifyDataSetChanged()
     }
 
-    fun remove(data: List<Int>) {
+    fun remove(data: List<ChartBean>) {
         dataList.remove(data)
         notifyDataSetChanged()
     }
 
-    fun getData(): ArrayList<List<Int>> = dataList
+    fun getData(): ArrayList<List<ChartBean>> = dataList
 
     fun notifyDataSetChanged() {
         setChanged()
