@@ -81,6 +81,16 @@ open class BaseScrollerView(context: Context, attributes: AttributeSet?, defStyl
     private var velocityTracker: VelocityTracker? = null
 
     /**
+     * 记录手指划过的距离
+     * */
+    protected var offsetX: Float = 0f
+
+    /**
+     * 手指滑动距离的备份，用于判断是否手指移动了
+     * */
+    protected var offsetXTemp: Float = 0f
+
+    /**
      * 计算最大宽度
      * */
     private fun calculateMaxWidth() {
@@ -154,27 +164,32 @@ open class BaseScrollerView(context: Context, attributes: AttributeSet?, defStyl
                 if (xMove != -1f) {
                     xDown = xMove
                 }
+                // 备份偏移的位置
+                offsetXTemp = offsetX
                 // 记录当前的x坐标
                 xMove = event.rawX
                 // 计算移动的位置
-                val scrolledX = (xDown - xMove).toInt()
-                // 如果已经滚动到最左边了，设置scrollTo 为0
-                if (scrollX + scrolledX < 0) {
-                    scrollTo(0, 0)
-                    return true
+                offsetX += (xDown - xMove)
+                // 对移动的位置进行范围检查
+                // 如果小于0，那么等于0
+                if (offsetX < 0) {
+                    offsetX = 0f
                 }
-                // 如果已经滑动到最右边了，设置scrollTo 为宽度
-                else if (scrollX + width + scrolledX > maxWidth) {
-                    scrollTo(maxWidth - width, 0)
-                    return true
+                // 如果已经大于了最右边界
+                else if (offsetX > maxWidth - width) {
+                    offsetX = maxWidth - width.toFloat()
                 }
-                scrollBy(scrolledX, 0)
+                // 检查偏移值是否发生了改变
+                if (offsetX != offsetXTemp) {
+                    // 重绘
+                    invalidate()
+                }
             }
         // 手势抬起
             MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
                 val dx = calculateFlingDistance()
                 // startScroll()方法来初始化滚动数据并刷新界面
-                scroller.startScroll(scrollX, 0, dx, 0)
+                scroller.startScroll(offsetX.toInt(), 0, dx, 0)
                 invalidate()
                 recycleVelocityTracker()
                 // 重置配置信息
@@ -203,25 +218,64 @@ open class BaseScrollerView(context: Context, attributes: AttributeSet?, defStyl
         if (isLeft) {
             dx = -dx
         }
-        // 如果滑动到了最左边，
-        if (scrollX + dx < 0) {
-            dx = -scrollX.toFloat()
+        // 对移动的位置进行范围检查
+        // 如果小于0，那么等于0
+        if (offsetX + dx < 0) {
+            dx = -offsetX
         }
-        // 如果已经滑动到了最右边
-        else if (scrollX + dx > maxWidth - width) {
-            dx = maxWidth - width - scrollX.toFloat()
+        // 如果已经大于了最右边界
+        else if (offsetX + dx > maxWidth - width) {
+            dx = maxWidth - width - offsetX
         }
-        Log.e("lzp", "scrollX is :$scrollX")
         Log.e("lzp", "dx is :$dx")
         return dx.toInt()
-//
     }
 
     override fun computeScroll() {
         // 第三步，重写computeScroll()方法，并在其内部完成平滑滚动的逻辑
         if (scroller.computeScrollOffset()) {
-            scrollTo(scroller.currX, scroller.currY)
+            offsetX = scroller.currX.toFloat()
+            Log.e("lzp", "currX is :${scroller.currX}")
             invalidate()
+        }
+    }
+
+    /**
+     * 根据偏移值，计算绘制的数据的开始位置
+     * */
+    protected fun getDataStartIndex(): Int {
+        // 计算每一个刻度的宽度
+        val markWidth = width / xLineMarkCount
+        // 计算已经偏移了几个刻度
+        val index = (offsetX / markWidth).toInt()
+        // 为了绘制第一条能够和前一条有连线，所以我们要减1
+        return Math.max(0, index - 1)
+    }
+
+    /**
+     * 根据偏移值，计算绘制的数据的结束位置
+     * */
+    protected fun getDataEndIndex(startIndex: Int): Int {
+        // 如果绘制的是第一个，直接返回偏移值
+        return Math.min(startIndex + xLineMarkCount + 2, adapter!!.maxDataCount)
+    }
+
+    /**
+     * 计算canvas绘制的偏移值
+     *
+     * 偏移值 - 刻度值宽度 * 开始位置，相当于对刻度值宽度取模
+     * */
+    protected fun getCanvasOffset(): Float {
+        val markWidth = width / xLineMarkCount
+        // 计算已经偏移了几个刻度
+        val index = (offsetX / markWidth).toInt()
+        // 如果绘制的是第一个，直接返回偏移值
+        return if (index == 0) {
+            -offsetX % markWidth
+        }
+        // // 为了绘制第一条能够和前一条有连线，所以我们要减去刻度值的宽度
+        else {
+            -offsetX % markWidth - markWidth
         }
     }
 

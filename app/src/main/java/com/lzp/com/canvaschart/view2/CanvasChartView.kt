@@ -92,10 +92,20 @@ class CanvasChartView(context: Context, attributes: AttributeSet?, defStyleAttr:
 
     override fun onDraw(canvas: Canvas) {
         super.onDraw(canvas)
+        // 保存一下canvas的状态
+        canvas.save()
         // 绘制X轴和Y轴
         drawXYLine(canvas)
+
+        // 从这里开始，我们要对canvas进行偏移
+        canvas.translate(getCanvasOffset(), 0f)
+
+        // 绘制每一条数据之间的间隔虚线
+        drawDashLine(canvas)
         // 绘制数据
         drawData(canvas)
+        // 恢复一下canvas的状态
+        canvas.restore()
     }
 
     /**
@@ -132,23 +142,26 @@ class CanvasChartView(context: Context, attributes: AttributeSet?, defStyleAttr:
         val offsetY = lineWidth / 2
         // 绘制Y轴
         canvas.drawLine(offsetY, 0f, offsetY, height.toFloat(), paint)
-        // 绘制每一条数据之间的间隔虚线
-        drawDashLine(canvas)
     }
 
     /**
      * 绘制数据之间
+     *
+     * 根据偏移值计算要绘制的区域
      * */
     private fun drawDashLine(canvas: Canvas) {
-        // 画条目之间的间隔虚线
-        var index = 1
         // 通过x轴的刻度间隔，计算x轴坐标
         val xItemSpace = width / xLineMarkCount.toFloat()
+        // 设置画笔的效果
         paint.color = dashLineColor
         paint.strokeWidth = dashLineWidth
         paint.pathEffect = DashPathEffect(floatArrayOf(10f, 10f), 1f)
-        while (index < xLineMarkCount) {
-            val startY = xItemSpace * index
+        // 画条目之间的间隔虚线，从Data的开始位置绘制到结束位置
+        val startIndex = getDataStartIndex()
+        val endIndex = getDataEndIndex(startIndex)
+        var index = startIndex
+        while (index < endIndex) {
+            val startY = xItemSpace * (index - startIndex)
             val path = Path()
             path.moveTo(startY, 0f)
             path.lineTo(startY, height.toFloat())
@@ -179,11 +192,23 @@ class CanvasChartView(context: Context, attributes: AttributeSet?, defStyleAttr:
         val xItemSpace = width / xLineMarkCount
         val path = Path()
         val dotPath = Path()
-        for ((index, item) in data.withIndex()) {
-            // 计算每一个点的位置f
-            val xPos = (xItemSpace / 2 + index * xItemSpace).toFloat()
+        // 绘制开始位置到结束位置的数据
+        val startIndex = getDataStartIndex()
+        val endIndex = getDataEndIndex(startIndex)
+        var index = startIndex
+        while (index < endIndex) {
+            // 因为数据的长度不统一，所以这里要做数据的场地检查
+            if (index >= data.size){
+                break
+            }
+            // 计算每一个点的位置
+            val item = data[index]
+            // 计算绘制的x坐标
+            val xPos = (xItemSpace / 2 + (index - startIndex) * xItemSpace).toFloat()
+            // 计算绘制的y坐标
             val yPos = calculateYPosition(item)
-            if (index == 0) {
+            // 设置Path路径
+            if (index == startIndex) {
                 path.moveTo(xPos, yPos)
             } else {
                 path.lineTo(xPos, yPos)
@@ -191,6 +216,7 @@ class CanvasChartView(context: Context, attributes: AttributeSet?, defStyleAttr:
             dotPath.addCircle(xPos, yPos, dotWidth, Path.Direction.CW)
             // 绘制文字
             drawText(canvas, item, xPos, yPos)
+            index++
         }
         // 绘制曲线
         paint.style = Paint.Style.STROKE
@@ -232,7 +258,7 @@ class CanvasChartView(context: Context, attributes: AttributeSet?, defStyleAttr:
             canvas.drawText(text, xPos - textWidth / 2, yPos - dotWidth - fontMetrics.descent - textSpace, paint)
         } else {
             // 要把文字自带的间距减去，统一和圆点之间的间距
-            canvas.drawText(text, xPos - textWidth / 2, yPos + dotWidth  - offset + textSpace, paint)
+            canvas.drawText(text, xPos - textWidth / 2, yPos + dotWidth - offset + textSpace, paint)
         }
     }
 

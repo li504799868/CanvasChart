@@ -36,7 +36,8 @@ class MainActivity : AppCompatActivity() {
                 ChartBean(-90f, "afgy"),
                 ChartBean(-40f, "afgy")))
 
-        canvas_chart.adapter = adapter
+        canvas_chart_1.adapter = adapter
+        canvas_chart_2.adapter = adapter
 //        canvas_chart.setOnClickListener({
 //            adapter.addData(listOf(ChartBean(-15f, "afgy"),
 //                    ChartBean(-27f, "afgy"),
