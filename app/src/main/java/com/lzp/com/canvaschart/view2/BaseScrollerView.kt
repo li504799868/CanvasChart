@@ -13,6 +13,8 @@ import com.lzp.com.canvaschart.base.BaseDataAdapter
 
 /**
  * Created by li.zhipeng on 2018/5/3.
+ *
+ *      图表滑动方案2
  */
 open class BaseScrollerView(context: Context, attributes: AttributeSet?, defStyleAttr: Int)
     : View(context, attributes, defStyleAttr) {

@@ -13,6 +13,8 @@ import com.lzp.com.canvaschart.base.BaseDataAdapter
 
 /**
  * Created by li.zhipeng on 2018/5/3.
+ *
+ *   图表滑动方案1
  */
 open class BaseScrollerView(context: Context, attributes: AttributeSet?, defStyleAttr: Int)
     : View(context, attributes, defStyleAttr) {
@@ -214,7 +216,6 @@ open class BaseScrollerView(context: Context, attributes: AttributeSet?, defStyl
         Log.e("lzp", "scrollX is :$scrollX")
         Log.e("lzp", "dx is :$dx")
         return dx.toInt()
-//
     }
 
     override fun computeScroll() {
