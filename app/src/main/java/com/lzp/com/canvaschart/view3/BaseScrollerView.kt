@@ -28,6 +28,11 @@ open class BaseScrollerView(context: Context, attributes: AttributeSet?, defStyl
     constructor(context: Context) : this(context, null)
 
     /**
+     * 圆点的宽度
+     * */
+    var dotWidth = 15f
+
+    /**
      * x轴的刻度间隔
      *
      * 因为x周是可以滑动的，所以只有刻度的数量这一个属性
@@ -53,6 +58,11 @@ open class BaseScrollerView(context: Context, attributes: AttributeSet?, defStyl
      * 最大宽度，大于等于width
      * */
     private var maxWidth: Int = 0
+
+    /**
+     * 每个刻度的宽度
+     * */
+    private var markWidth: Int = 0
 
     /**
      * 是否能滑动
@@ -83,6 +93,8 @@ open class BaseScrollerView(context: Context, attributes: AttributeSet?, defStyl
      * 计算最大宽度
      * */
     private fun calculateMaxWidth() {
+        // 计算每一个刻度的宽度
+        markWidth = width / xLineMarkCount
         // 得到数据的数量
         val count = adapter?.maxDataCount ?: 0
         maxWidth = if (count < xLineMarkCount) {
@@ -103,12 +115,9 @@ open class BaseScrollerView(context: Context, attributes: AttributeSet?, defStyl
      * 根据偏移值，计算绘制的数据的开始位置
      * */
     protected fun getDataStartIndex(): Int {
-        // 计算每一个刻度的宽度
-        val markWidth = width / xLineMarkCount
         // 计算已经偏移了几个刻度
-        val index = (offsetX / markWidth).toInt()
-        // 为了绘制第一条能够和前一条有连线，所以我们要减1
-        return Math.max(0, index - 1)
+        val index = (offsetX - markWidth / 2) / (markWidth)
+        return index.toInt()
     }
 
     /**
@@ -125,16 +134,14 @@ open class BaseScrollerView(context: Context, attributes: AttributeSet?, defStyl
      * 偏移值 - 刻度值宽度 * 开始位置，相当于对刻度值宽度取模
      * */
     protected fun getCanvasOffset(): Float {
-        val markWidth = width / xLineMarkCount
         // 计算已经偏移了几个刻度
-        val index = (offsetX / markWidth).toInt()
-        // 如果绘制的是第一个，直接返回偏移值
-        return if (index == 0) {
-            -offsetX % markWidth
-        }
-        // // 为了绘制第一条能够和前一条有连线，所以我们要减去刻度值的宽度
-        else {
-            -offsetX % markWidth - markWidth
+        val index = (offsetX - markWidth / 2) / (markWidth)
+        // 计算与第一个刻度的偏移值
+        val offset = offsetX % markWidth
+        return when {
+            index.toInt() == 0 -> -offsetX
+            offset >= markWidth / 2 -> -offsetX % markWidth
+            else -> -offsetX % markWidth - markWidth
         }
     }
 

@@ -3,11 +3,18 @@ package com.lzp.com.canvaschart.view3
 import android.content.Context
 import android.graphics.*
 import android.util.AttributeSet
+import android.util.LruCache
 import com.lzp.com.canvaschart.base.ChartBean
 
 
 /**
  * Created by li.zhipeng on 2018/5/2.
+ *
+ *      绘制图表View
+ *
+ *      1、优化绘制过程Path对象的创建，主要是虚线和线条的绘制
+ *      2、优化文字的测量，使用缓存减少文字的测量操作
+ *      3、markWidth使用频繁，提升为全局属性
  */
 class CanvasChartView(context: Context, attributes: AttributeSet?, defStyleAttr: Int)
     : BaseScrollerView(context, attributes, defStyleAttr) {
@@ -51,11 +58,6 @@ class CanvasChartView(context: Context, attributes: AttributeSet?, defStyleAttr:
     var chartLineWidth: Float = 3f
 
     /**
-     * 圆点的宽度
-     * */
-    var dotWidth = 15f
-
-    /**
      * 圆点的颜色
      * */
     var dotColor: Int = Color.BLACK
@@ -90,10 +92,24 @@ class CanvasChartView(context: Context, attributes: AttributeSet?, defStyleAttr:
      * */
     var textSpace: Int = 0
 
+    /**
+     * Path缓存管理器
+     * */
+    private val pathCacheManager = PathCacheManager()
+
+    /**
+     * 文字宽度的缓存，这里可以考虑直接使用Lruache
+     * */
+    private val textWidthLruCache = LruCache<String, Float>(6)
+
     override fun onDraw(canvas: Canvas) {
         super.onDraw(canvas)
         // 保存一下canvas的状态
         canvas.save()
+
+        // 这里要重置一下缓存，因为要开始绘制新的图标了
+        pathCacheManager.resetCache()
+
         // 绘制X轴和Y轴
         drawXYLine(canvas)
 
@@ -121,6 +137,7 @@ class CanvasChartView(context: Context, attributes: AttributeSet?, defStyleAttr:
         paint.style = Paint.Style.STROKE
         drawXLine(canvas)
         drawYLine(canvas)
+
     }
 
     /**
@@ -148,6 +165,9 @@ class CanvasChartView(context: Context, attributes: AttributeSet?, defStyleAttr:
      * 绘制数据之间
      *
      * 根据偏移值计算要绘制的区域
+     *
+     * 优化点：这里我们绘制都会创建出多个Path对象，会造成内存的浪费，影响绘制效率
+     *        可以使用缓存避免这个问题
      * */
     private fun drawDashLine(canvas: Canvas) {
         // 通过x轴的刻度间隔，计算x轴坐标
@@ -160,14 +180,15 @@ class CanvasChartView(context: Context, attributes: AttributeSet?, defStyleAttr:
         val startIndex = getDataStartIndex()
         val endIndex = getDataEndIndex(startIndex)
         var index = startIndex
+        // 这里改为从缓存中取Path对象，并且只使用一个Path绘制所有虚线
+        val path = pathCacheManager.get()
         while (index < endIndex) {
             val startY = xItemSpace * (index - startIndex)
-            val path = Path()
             path.moveTo(startY, 0f)
             path.lineTo(startY, height.toFloat())
-            canvas.drawPath(path, paint)
             index++
         }
+        canvas.drawPath(path, paint)
     }
 
     /**
@@ -186,19 +207,22 @@ class CanvasChartView(context: Context, attributes: AttributeSet?, defStyleAttr:
 
     /**
      * 绘制一条数据曲线
+     *
+     * 优化点：这里我们绘制都会创建出多个Path对象，会造成内存的浪费，影响绘制效率
+     *        可以使用缓存避免这个问题
      * */
     private fun drawItemData(canvas: Canvas, data: List<ChartBean>) {
         // 通过x轴的刻度间隔，计算x轴坐标
         val xItemSpace = width / xLineMarkCount
-        val path = Path()
-        val dotPath = Path()
+        val path = pathCacheManager.get()
+        val dotPath = pathCacheManager.get()
         // 绘制开始位置到结束位置的数据
         val startIndex = getDataStartIndex()
         val endIndex = getDataEndIndex(startIndex)
         var index = startIndex
         while (index < endIndex) {
             // 因为数据的长度不统一，所以这里要做数据的场地检查
-            if (index >= data.size){
+            if (index >= data.size) {
                 break
             }
             // 计算每一个点的位置
@@ -224,8 +248,8 @@ class CanvasChartView(context: Context, attributes: AttributeSet?, defStyleAttr:
         paint.strokeWidth = chartLineWidth
         canvas.drawPath(path, paint)
         // 绘制圆点
-        paint.color = dotColor
         paint.style = Paint.Style.FILL
+        paint.color = dotColor
         canvas.drawPath(dotPath, paint)
     }
 
@@ -243,13 +267,17 @@ class CanvasChartView(context: Context, attributes: AttributeSet?, defStyleAttr:
 
     /**
      * 绘制文字
+     *
+     * 优化点：这里每次绘制文字，都需要测量文字的宽，因为文字是的变化并不频繁，
+     *        可以考虑使用缓存避免重复的测量，缓存的大小推荐使用可见的item数量
      * */
     private fun drawText(canvas: Canvas, item: ChartBean, xPos: Float, yPos: Float) {
         val text = item.text
         paint.textSize = textSize
         paint.color = textColor
         paint.style = Paint.Style.FILL
-        val textWidth = paint.measureText(text)
+        // 文字的宽度优先从缓存获取
+        val textWidth = getTextWidth(text)
         val fontMetrics = paint.fontMetrics
         // 文字自带的间距，不理解的可以查一下：如何绘制文字居中
         val offset = fontMetrics.ascent + (fontMetrics.ascent - fontMetrics.top)
@@ -261,5 +289,19 @@ class CanvasChartView(context: Context, attributes: AttributeSet?, defStyleAttr:
             canvas.drawText(text, xPos - textWidth / 2, yPos + dotWidth - offset + textSpace, paint)
         }
     }
+
+    /**
+     * 从缓冲中获取文字的宽度
+     * */
+    private fun getTextWidth(key: String): Float {
+        var width = textWidthLruCache.get(key)
+        // 如果缓存中没有这个文字的宽度，先测量，然后添加到缓存中
+        if (width == null) {
+            width = paint.measureText(key)
+            textWidthLruCache.put(key, width)
+        }
+        return width
+    }
+
 
 }
