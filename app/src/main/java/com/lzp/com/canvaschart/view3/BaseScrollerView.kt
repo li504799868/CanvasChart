@@ -38,6 +38,10 @@ open class BaseScrollerView(context: Context, attributes: AttributeSet?, defStyl
      * 因为x周是可以滑动的，所以只有刻度的数量这一个属性
      * */
     var xLineMarkCount: Int = 5
+        set(value) {
+            field = value
+            calculateMaxWidth()
+        }
 
     /**
      * 数据适配器
