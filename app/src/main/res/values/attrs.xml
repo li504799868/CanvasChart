@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <!-- CanvasChartView的自定义属性 -->
+    <declare-styleable name="BaseScrollerView">
+        <!-- x轴显示的刻度的个数 -->
+        <attr name="xLineMarkCount" format="integer" />
+    </declare-styleable>
+
+    <!-- CanvasChartView的自定义属性 -->
+    <declare-styleable name="CanvasChartView">
+        <!-- 是否只显示第一象限 -->
+        <attr name="onlyFirstArea" format="boolean"/>
+        <!-- x、y轴的颜色 -->
+        <attr name="lineColor" format="color" />
+        <!-- X轴和Y轴的宽度 -->
+        <attr name="lineWidth" format="dimension" />
+        <!-- 图表的连线颜色 -->
+        <attr name="chartLineColor" format="color" />
+        <!-- 图表的连线宽度-->
+        <attr name="chartLineWidth" format="dimension" />
+        <!-- 圆点的颜色 -->
+        <attr name="dotColor" format="color" />
+        <!-- 虚线的颜色 -->
+        <attr name="dashLineColor" format="color" />
+        <!-- 虚线的宽度 -->
+        <attr name="dashLineWidth" format="dimension" />
+        <!-- y轴的最大刻度 -->
+        <attr name="yLineMax" format="integer" />
+        <!-- 绘制文字的大小 -->
+        <attr name="textSize" format="dimension" />
+        <!-- 绘制文字的颜色 -->
+        <attr name="textColor" format="color" />
+        <!-- 文字和圆点之间的间距 -->
+        <attr name="textSpace" format="dimension" />
+        <!-- 圆点的宽度 -->
+        <attr name="dotWidth" format="dimension" />
+    </declare-styleable>
+
+</resources>
