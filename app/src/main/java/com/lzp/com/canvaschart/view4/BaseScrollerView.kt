@@ -2,7 +2,6 @@ package com.lzp.com.canvaschart.view4
 
 import android.annotation.SuppressLint
 import android.content.Context
-import android.content.res.TypedArray
 import android.support.v4.view.ViewCompat
 import android.util.AttributeSet
 import android.util.Log
@@ -70,7 +69,7 @@ open class BaseScrollerView(context: Context, attributes: AttributeSet?, defStyl
     /**
      * 每个刻度的宽度
      * */
-    private var markWidth: Int = 0
+    protected var markWidth: Int = 0
 
     /**
      * 是否能滑动

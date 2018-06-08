@@ -13,9 +13,6 @@ import com.lzp.com.canvaschart.base.ChartBean
  *
  *      绘制图表View
  *
- *      1、优化绘制过程Path对象的创建，主要是虚线和线条的绘制
- *      2、优化文字的测量，使用缓存减少文字的测量操作
- *      3、markWidth使用频繁，提升为全局属性
  */
 class CanvasChartView(context: Context, attributes: AttributeSet?, defStyleAttr: Int)
     : BaseScrollerView(context, attributes, defStyleAttr) {
@@ -59,6 +56,12 @@ class CanvasChartView(context: Context, attributes: AttributeSet?, defStyleAttr:
     private var chartLineWidth: Float = 3f
 
     /**
+     * 图表的线条样式
+     *
+     * */
+    private var chartLineStyle: ChartLineStyle = ChartLineStyle.LINEAR
+
+    /**
      * 圆点的颜色
      * */
     private var dotColor: Int = Color.BLACK
@@ -67,6 +70,11 @@ class CanvasChartView(context: Context, attributes: AttributeSet?, defStyleAttr:
      * 圆点的宽度
      * */
     private var dotWidth = 15f
+
+    /**
+     * 是否显示dot
+     * */
+    private var showDataDot: Boolean = true
 
     /**
      * 虚线的颜色
@@ -109,7 +117,7 @@ class CanvasChartView(context: Context, attributes: AttributeSet?, defStyleAttr:
     private val pathCacheManager = PathCacheManager()
 
     /**
-     * 文字宽度的缓存，这里可以考虑直接使用Lruache
+     * 文字宽度的缓存，这里可以考虑直接使用Lrucache
      * */
     private val textWidthLruCache = LruCache<String, Float>(6)
 
@@ -123,10 +131,17 @@ class CanvasChartView(context: Context, attributes: AttributeSet?, defStyleAttr:
         chartLineColor = typedArray.getColor(R.styleable.CanvasChartView_chartLineColor, Color.RED)
         // 图表的宽度
         chartLineWidth = typedArray.getDimensionPixelSize(R.styleable.CanvasChartView_chartLineWidth, 3).toFloat()
+        // 图表的线条的样式
+        val style = typedArray.getInt(R.styleable.CanvasChartView_chartLineStyle, 0)
+        if (style == 1) {
+            chartLineStyle = ChartLineStyle.CURVE
+        }
         // 圆点的颜色
         dotColor = typedArray.getColor(R.styleable.CanvasChartView_dotColor, Color.BLACK)
         // 圆点的宽度
         dotWidth = typedArray.getDimensionPixelSize(R.styleable.CanvasChartView_dotWidth, 10).toFloat()
+        // 是否显示数据点
+        showDataDot = typedArray.getBoolean(R.styleable.CanvasChartView_showDataDot, true)
         // 虚线的颜色
         dashLineColor = typedArray.getColor(R.styleable.CanvasChartView_dashLineColor, Color.GRAY)
         // 虚线的宽度
@@ -222,8 +237,6 @@ class CanvasChartView(context: Context, attributes: AttributeSet?, defStyleAttr:
      *        可以使用缓存避免这个问题
      * */
     private fun drawDashLine(canvas: Canvas) {
-        // 通过x轴的刻度间隔，计算x轴坐标
-        val xItemSpace = width / xLineMarkCount.toFloat()
         // 设置画笔的效果
         paint.color = dashLineColor
         paint.strokeWidth = dashLineWidth
@@ -235,7 +248,7 @@ class CanvasChartView(context: Context, attributes: AttributeSet?, defStyleAttr:
         // 这里改为从缓存中取Path对象，并且只使用一个Path绘制所有虚线
         val path = pathCacheManager.get()
         while (index <= endIndex) {
-            val startY = xItemSpace * (index - startIndex + 1) - dashLineWidth / 2
+            val startY = markWidth * (index - startIndex + 1) - dashLineWidth / 2
             path.moveTo(startY, 0f)
             // 减去坐标轴宽度的一半
             path.lineTo(startY, height.toFloat() - lineWidth / 2)
@@ -265,10 +278,27 @@ class CanvasChartView(context: Context, attributes: AttributeSet?, defStyleAttr:
      *        可以使用缓存避免这个问题
      * */
     private fun drawItemData(canvas: Canvas, data: List<ChartBean>) {
-        // 通过x轴的刻度间隔，计算x轴坐标
-        val xItemSpace = width / xLineMarkCount
         val path = pathCacheManager.get()
         val dotPath = pathCacheManager.get()
+        // 绘制item之间的连线
+        addItemLine(canvas, data, path, dotPath)
+        // 绘制曲线
+        paint.style = Paint.Style.STROKE
+        paint.color = chartLineColor
+        paint.strokeWidth = chartLineWidth
+        canvas.drawPath(path, paint)
+        if (showDataDot) {
+            // 绘制圆点
+            paint.style = Paint.Style.FILL
+            paint.color = dotColor
+            canvas.drawPath(dotPath, paint)
+        }
+    }
+
+    /**
+     * 计算数据之间的连线和数据点
+     * */
+    private fun addItemLine(canvas: Canvas, data: List<ChartBean>, path: Path, dotPath: Path) {
         // 绘制开始位置到结束位置的数据
         val startIndex = getDataStartIndex()
         val endIndex = getDataEndIndex(startIndex)
@@ -281,30 +311,49 @@ class CanvasChartView(context: Context, attributes: AttributeSet?, defStyleAttr:
             // 计算每一个点的位置
             val item = data[index]
             // 计算绘制的x坐标
-            val xPos = (xItemSpace / 2 + (index - startIndex) * xItemSpace).toFloat()
+            val xPos = calculateXPosition(startIndex, index)
             // 计算绘制的y坐标
             val yPos = calculateYPosition(item)
-            // 设置Path路径
+            // 如果不显示数据圆点，省去添加圆点的操作
+            if (showDataDot) {
+                // 添加数据点Path的圆点
+                dotPath.addCircle(xPos, yPos, dotWidth, Path.Direction.CW)
+            }
+            // 绘制文字
+            drawText(canvas, item, xPos, yPos)
+
             if (index == startIndex) {
                 path.moveTo(xPos, yPos)
             } else {
-                path.lineTo(xPos, yPos)
+                // 直线
+                if (chartLineStyle == ChartLineStyle.LINEAR) {
+                    path.lineTo(xPos, yPos)
+                }
+                // 曲线
+                else if (chartLineStyle == ChartLineStyle.CURVE) {
+                    curveTo(index, data, startIndex, xPos, yPos, path)
+                }
             }
-            dotPath.addCircle(xPos, yPos, dotWidth, Path.Direction.CW)
-            // 绘制文字
-            drawText(canvas, item, xPos, yPos)
             index++
         }
-        // 绘制曲线
-        paint.style = Paint.Style.STROKE
-        paint.color = chartLineColor
-        paint.strokeWidth = chartLineWidth
-        canvas.drawPath(path, paint)
-        // 绘制圆点
-        paint.style = Paint.Style.FILL
-        paint.color = dotColor
-        canvas.drawPath(dotPath, paint)
     }
+
+    private fun curveTo(index: Int, data: List<ChartBean>, startIndex: Int, xPos: Float, yPos: Float, path: Path) {
+        // 如果是最后一个点，不需要计算
+        if (index + 1 >= data.size) {
+            return
+        }
+        // 结束的点
+        val nextXPos = calculateXPosition(startIndex, index + 1)
+        val nextYPos = calculateYPosition(data[index + 1])
+        val wt = (xPos + nextXPos) / 2
+        path.cubicTo(wt, yPos, wt, nextYPos, nextXPos, nextYPos)
+    }
+
+    /**
+     * 计算item的x坐标
+     * */
+    private fun calculateXPosition(startIndex: Int, index: Int): Float = (markWidth / 2 + (index - startIndex) * markWidth).toFloat()
 
     /**
      * 计算每一个数据点在Y轴上的坐标
@@ -325,8 +374,6 @@ class CanvasChartView(context: Context, attributes: AttributeSet?, defStyleAttr:
     /**
      * 绘制文字
      *
-     * 优化点：这里每次绘制文字，都需要测量文字的宽，因为文字是的变化并不频繁，
-     *        可以考虑使用缓存避免重复的测量，缓存的大小推荐使用可见的item数量
      * */
     private fun drawText(canvas: Canvas, item: ChartBean, xPos: Float, yPos: Float) {
         val text = item.text
@@ -358,6 +405,23 @@ class CanvasChartView(context: Context, attributes: AttributeSet?, defStyleAttr:
             textWidthLruCache.put(key, width)
         }
         return width
+    }
+
+    /**
+     * 线条Style
+     * */
+    enum class ChartLineStyle(val value: String) {
+
+        /**
+         * 直线
+         * */
+        LINEAR("linear"),
+
+        /**
+         * 曲线
+         * */
+        CURVE("curve")
+
     }
 
 

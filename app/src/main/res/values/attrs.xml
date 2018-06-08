@@ -10,7 +10,7 @@
     <!-- CanvasChartView的自定义属性 -->
     <declare-styleable name="CanvasChartView">
         <!-- 是否只显示第一象限 -->
-        <attr name="onlyFirstArea" format="boolean"/>
+        <attr name="onlyFirstArea" format="boolean" />
         <!-- x、y轴的颜色 -->
         <attr name="lineColor" format="color" />
         <!-- X轴和Y轴的宽度 -->
@@ -19,8 +19,17 @@
         <attr name="chartLineColor" format="color" />
         <!-- 图表的连线宽度-->
         <attr name="chartLineWidth" format="dimension" />
+        <!-- 图表的连线样式：直线或曲线 -->
+        <attr name="chartLineStyle" format="enum">
+            <enum name="linear" value="0" />
+            <enum name="curve" value="1" />
+        </attr>
+        <!-- 圆点的宽度 -->
+        <attr name="dotWidth" format="dimension" />
         <!-- 圆点的颜色 -->
         <attr name="dotColor" format="color" />
+        <!-- 是否显示圆点 -->
+        <attr name="showDataDot" format="boolean" />
         <!-- 虚线的颜色 -->
         <attr name="dashLineColor" format="color" />
         <!-- 虚线的宽度 -->
@@ -33,8 +42,6 @@
         <attr name="textColor" format="color" />
         <!-- 文字和圆点之间的间距 -->
         <attr name="textSpace" format="dimension" />
-        <!-- 圆点的宽度 -->
-        <attr name="dotWidth" format="dimension" />
     </declare-styleable>
 
 </resources>
