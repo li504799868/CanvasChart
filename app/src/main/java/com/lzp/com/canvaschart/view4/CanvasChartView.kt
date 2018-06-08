@@ -338,6 +338,9 @@ class CanvasChartView(context: Context, attributes: AttributeSet?, defStyleAttr:
         }
     }
 
+    /**
+     * 平滑到下一个点
+     * */
     private fun curveTo(index: Int, data: List<ChartBean>, startIndex: Int, xPos: Float, yPos: Float, path: Path) {
         // 如果是最后一个点，不需要计算
         if (index + 1 >= data.size) {
@@ -346,7 +349,7 @@ class CanvasChartView(context: Context, attributes: AttributeSet?, defStyleAttr:
         // 结束的点
         val nextXPos = calculateXPosition(startIndex, index + 1)
         val nextYPos = calculateYPosition(data[index + 1])
-        val wt = (xPos + nextXPos) / 2
+        val wt = xPos + markWidth / 2
         path.cubicTo(wt, yPos, wt, nextYPos, nextXPos, nextYPos)
     }
 
