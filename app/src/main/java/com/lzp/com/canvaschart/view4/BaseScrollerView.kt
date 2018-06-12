@@ -39,6 +39,12 @@ open class BaseScrollerView(context: Context, attributes: AttributeSet?, defStyl
             calculateMaxWidth()
         }
 
+    /**
+     * y轴的刻度个数
+     *
+     * */
+    var yLineMarkCount: Int = 5
+
     init {
         val typedArray = context.obtainStyledAttributes(attributes, R.styleable.BaseScrollerView)
         // 得到x轴的刻度数
@@ -72,6 +78,21 @@ open class BaseScrollerView(context: Context, attributes: AttributeSet?, defStyl
     protected var markWidth: Int = 0
 
     /**
+     * 绘制Y轴的偏移值，这个值用来绘制Y轴的文字
+     * */
+    private var drawOffsetX = 50f
+
+    /**
+     * 绘制X轴的偏移值，这个值用来绘制X轴下面的文字
+     * */
+    private var drawOffsetY = 50f
+
+    /**
+     * 绘制X轴和Y轴的宽度
+     * */
+    protected var lineWidth = 5f
+
+    /**
      * 是否能滑动
      * */
     private var canScroll: Boolean = false
@@ -101,7 +122,7 @@ open class BaseScrollerView(context: Context, attributes: AttributeSet?, defStyl
      * */
     private fun calculateMaxWidth() {
         // 计算每一个刻度的宽度
-        markWidth = width / xLineMarkCount
+        markWidth = ((width - drawOffsetX - lineWidth) / xLineMarkCount).toInt()
         // 得到数据的数量
         val count = adapter?.maxDataCount ?: 0
         maxWidth = if (count < xLineMarkCount) {
@@ -123,7 +144,7 @@ open class BaseScrollerView(context: Context, attributes: AttributeSet?, defStyl
      * */
     protected fun getDataStartIndex(): Int {
         // 计算已经偏移了几个刻度
-        val index = (offsetX - markWidth / 2) / (markWidth)
+        val index = (offsetX - drawOffsetX - markWidth / 2) / (markWidth)
         return index.toInt()
     }
 
@@ -142,14 +163,28 @@ open class BaseScrollerView(context: Context, attributes: AttributeSet?, defStyl
      * */
     protected fun getCanvasOffset(): Float {
         // 计算已经偏移了几个刻度
-        val index = (offsetX - markWidth / 2) / (markWidth)
+        val index = getDataStartIndex()
         // 计算与第一个刻度的偏移值
-        val offset = offsetX % markWidth
+        val offset = (offsetX - drawOffsetX) % markWidth
         return when {
-            index.toInt() == 0 -> -offsetX
-            offset >= markWidth / 2 -> -offsetX % markWidth
-            else -> -offsetX % markWidth - markWidth
+            index == 0 -> getRealX(-offsetX)
+            offset >= markWidth / 2 -> getRealX(-offsetX) % markWidth
+            else -> getRealX(-offsetX) % markWidth - markWidth
         }
+    }
+
+    /**
+     * 把计算的X坐标加上偏移值
+     * */
+    protected fun getRealX(xPos: Float): Float {
+        return xPos + drawOffsetX
+    }
+
+    /**
+     * 把计算的Y坐标加上偏移值
+     */
+    protected fun getRealY(yPos: Float): Float {
+        return yPos - drawOffsetY
     }
 
     /**
@@ -176,8 +211,8 @@ open class BaseScrollerView(context: Context, attributes: AttributeSet?, defStyl
             return true
         }
         // 如果已经大于了最右边界
-        else if (offsetX > maxWidth - width) {
-            offsetX = maxWidth - width.toFloat()
+        else if (offsetX > maxWidth - width - drawOffsetX) {
+            offsetX = maxWidth - width - drawOffsetX
             return true
         }
         return false

@@ -41,11 +41,6 @@ class CanvasChartView(context: Context, attributes: AttributeSet?, defStyleAttr:
     private var lineColor: Int = Color.BLUE
 
     /**
-     * 绘制X轴和Y轴的宽度
-     * */
-    private var lineWidth = 5f
-
-    /**
      * 图表的颜色
      * */
     private var chartLineColor: Int = Color.RED
@@ -121,6 +116,22 @@ class CanvasChartView(context: Context, attributes: AttributeSet?, defStyleAttr:
      * */
     private val textWidthLruCache = LruCache<String, Float>(6)
 
+    /**
+     * 是否显示刻度值
+     * */
+    private var showMarkText = false
+
+    /**
+     * 刻度文字的大小
+     *
+     * */
+    private var markTextSize = 40f
+
+    /**
+     * 刻度文字的颜色
+     * */
+    private var markTextColor = Color.BLACK
+
     init {
         val typedArray = context.obtainStyledAttributes(attributes, R.styleable.CanvasChartView)
         // 绘制X轴和Y轴的颜色
@@ -169,12 +180,16 @@ class CanvasChartView(context: Context, attributes: AttributeSet?, defStyleAttr:
 
         // 绘制X轴和Y轴
         drawXYLine(canvas)
-
+        // 绘制X轴的虚线
+        drawXDashLine(canvas)
         // 从这里开始，我们要对canvas进行偏移
-        canvas.translate(getCanvasOffset(), 0f)
+        canvas.translate(getCanvasOffset() + lineWidth, -lineWidth)
+        // 裁剪要绘制的区域
+        // 裁剪的区域坐标记得减去偏移值，修正裁剪的位置
+        canvas.clipRect(getRealX(lineWidth - getCanvasOffset()), 0f, width.toFloat() - getCanvasOffset(), getRealY(height.toFloat()))
 
         // 绘制每一条数据之间的间隔虚线
-        drawDashLine(canvas)
+        drawYDashLine(canvas)
         // 绘制数据
         drawData(canvas)
         // 恢复一下canvas的状态
@@ -204,12 +219,12 @@ class CanvasChartView(context: Context, attributes: AttributeSet?, defStyleAttr:
         val width = width.toFloat()
         if (onlyFirstArea) {
             // 绘制X轴
-            canvas.drawLine(0f, height - lineWidth / 2, width, height - lineWidth / 2, paint)
+            canvas.drawLine(getRealX(0f), getRealY(height - lineWidth / 2), width, getRealY(height - lineWidth / 2), paint)
         } else {
             // 计算y方向上的中心位置
             val yCenter = (height - lineWidth) / 2
             // 绘制X轴
-            canvas.drawLine(0f, yCenter, width, yCenter, paint)
+            canvas.drawLine(getRealX(0f), getRealY(yCenter), width, getRealY(yCenter), paint)
         }
     }
 
@@ -217,30 +232,43 @@ class CanvasChartView(context: Context, attributes: AttributeSet?, defStyleAttr:
      * 画Y轴
      * */
     private fun drawYLine(canvas: Canvas) {
-        // 计算一下Y轴的偏移值
-        val offsetY = lineWidth / 2
+        // 计算一下X方向的偏移值
+        val offsetX = getRealX(lineWidth / 2)
         if (onlyFirstArea) {
 
         } else {
 
         }
         // 绘制Y轴
-        canvas.drawLine(offsetY, 0f, offsetY, height.toFloat(), paint)
+        canvas.drawLine(offsetX, getRealY(0f), offsetX, getRealY(height.toFloat()), paint)
     }
 
     /**
-     * 绘制数据之间
-     *
-     * 根据偏移值计算要绘制的区域
-     *
-     * 优化点：这里我们绘制都会创建出多个Path对象，会造成内存的浪费，影响绘制效率
-     *        可以使用缓存避免这个问题
+     * 绘制x轴的虚线
      * */
-    private fun drawDashLine(canvas: Canvas) {
+    private fun drawXDashLine(canvas: Canvas) {
         // 设置画笔的效果
         paint.color = dashLineColor
         paint.strokeWidth = dashLineWidth
         paint.pathEffect = DashPathEffect(floatArrayOf(10f, 10f), 1f)
+        // 画条目之间的间隔虚线，从Data的开始位置绘制到结束位置
+        val startX = getRealX( lineWidth)
+        val path = pathCacheManager.get()
+        // 计算每一个y刻度的高度
+        val yMarkHeight = getRealY(height - lineWidth) / yLineMarkCount
+
+        for (it in 0..4) {
+            path.moveTo(startX, yMarkHeight * it)
+            // 减去坐标轴宽度的一半
+            path.lineTo(width.toFloat(), yMarkHeight * it)
+        }
+        canvas.drawPath(path, paint)
+    }
+
+    /**
+     * 绘制y轴的虚线
+     * */
+    private fun drawYDashLine(canvas: Canvas) {
         // 画条目之间的间隔虚线，从Data的开始位置绘制到结束位置
         val startIndex = getDataStartIndex()
         val endIndex = getDataEndIndex(startIndex)
@@ -248,10 +276,10 @@ class CanvasChartView(context: Context, attributes: AttributeSet?, defStyleAttr:
         // 这里改为从缓存中取Path对象，并且只使用一个Path绘制所有虚线
         val path = pathCacheManager.get()
         while (index <= endIndex) {
-            val startY = markWidth * (index - startIndex + 1) - dashLineWidth / 2
-            path.moveTo(startY, 0f)
+            val startX = markWidth * (index - startIndex + 1) - dashLineWidth / 2
+            path.moveTo(startX, 0f)
             // 减去坐标轴宽度的一半
-            path.lineTo(startY, height.toFloat() - lineWidth / 2)
+            path.lineTo(startX, height.toFloat() - lineWidth)
             index++
         }
         canvas.drawPath(path, paint)
