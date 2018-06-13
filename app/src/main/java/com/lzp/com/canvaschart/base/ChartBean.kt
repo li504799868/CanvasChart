@@ -8,4 +8,8 @@ package com.lzp.com.canvaschart.base
  *  number ：数据
  *  text：显示的文字
  */
-data class ChartBean(val number: Float, val text: String)
+data class ChartBean(val number: Float, val text: String, val markText: String){
+
+    constructor(number: Float, text: String): this(number, text, "")
+
+}

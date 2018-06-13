@@ -5,6 +5,10 @@
     <declare-styleable name="BaseScrollerView">
         <!-- x轴显示的刻度的个数 -->
         <attr name="xLineMarkCount" format="integer" />
+        <!-- y轴显示的刻度的个数 -->
+        <attr name="yLineMarkCount" format="integer" />
+        <!-- X轴和Y轴的宽度 -->
+        <attr name="lineWidth" format="dimension" />
     </declare-styleable>
 
     <!-- CanvasChartView的自定义属性 -->
@@ -13,8 +17,6 @@
         <attr name="onlyFirstArea" format="boolean" />
         <!-- x、y轴的颜色 -->
         <attr name="lineColor" format="color" />
-        <!-- X轴和Y轴的宽度 -->
-        <attr name="lineWidth" format="dimension" />
         <!-- 图表的连线颜色 -->
         <attr name="chartLineColor" format="color" />
         <!-- 图表的连线宽度-->
@@ -30,6 +32,11 @@
         <attr name="dotColor" format="color" />
         <!-- 是否显示圆点 -->
         <attr name="showDataDot" format="boolean" />
+        <!-- 数据圆点的位置 -->
+        <attr name="dataDotGravity" format="enum" >
+            <enum name="line" value="0" />
+            <enum name="center" value="1" />
+        </attr>
         <!-- 虚线的颜色 -->
         <attr name="dashLineColor" format="color" />
         <!-- 虚线的宽度 -->

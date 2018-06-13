@@ -138,11 +138,6 @@ class CanvasChartView(context: Context, attributes: AttributeSet?, defStyleAttr:
     private var xMarkTextMaxWidth = 0f
 
     /**
-     * x轴的留白
-     * */
-    private var xLineSpace = 0f
-
-    /**
      * Y轴的留白
      * */
     private var yLineSpace = 0f
@@ -151,8 +146,6 @@ class CanvasChartView(context: Context, attributes: AttributeSet?, defStyleAttr:
         val typedArray = context.obtainStyledAttributes(attributes, R.styleable.CanvasChartView)
         // 绘制X轴和Y轴的颜色
         lineColor = typedArray.getColor(R.styleable.CanvasChartView_lineColor, Color.BLUE)
-        // 绘制X轴和Y轴的宽度
-        lineWidth = typedArray.getDimensionPixelSize(R.styleable.CanvasChartView_lineWidth, 5).toFloat()
         // 图表的颜色
         chartLineColor = typedArray.getColor(R.styleable.CanvasChartView_chartLineColor, Color.RED)
         // 图表的宽度
@@ -195,10 +188,17 @@ class CanvasChartView(context: Context, attributes: AttributeSet?, defStyleAttr:
         super.onDraw(canvas)
         // 保存一下canvas的状态
         canvas.save()
+        // 如果要绘制刻度值的文字，需要先计算图标的偏移距离
         // y轴刻度值文字的最大宽度
-        paint.textSize = markTextSize
-        xMarkTextMaxWidth = paint.measureText(yLineMax.toString())
-        drawOffsetX = xMarkTextMaxWidth
+        if (showMarkText) {
+            paint.textSize = markTextSize
+            xMarkTextMaxWidth = getTextWidth(yLineMax.toString())
+            // x轴绘制的起始位置偏移值
+            drawOffsetX = xMarkTextMaxWidth
+            // y轴绘制的起始位置偏移值
+            val fontMetrics = paint.fontMetrics
+            drawOffsetY = fontMetrics.bottom - fontMetrics.top
+        }
 
         // 这里要重置一下缓存，因为要开始绘制新的图标了
         pathCacheManager.resetCache()
@@ -211,7 +211,7 @@ class CanvasChartView(context: Context, attributes: AttributeSet?, defStyleAttr:
         canvas.translate(getCanvasOffset() + lineWidth, -lineWidth)
         // 裁剪要绘制的区域
         // 裁剪的区域坐标记得减去偏移值，修正裁剪的位置
-        canvas.clipRect(getRealX(lineWidth - getCanvasOffset()), 0f, width.toFloat() - getCanvasOffset(), getRealY(height.toFloat()))
+        canvas.clipRect(getRealX(lineWidth - getCanvasOffset()), 0f, width.toFloat() - getCanvasOffset(), height.toFloat())
 
         // 绘制每一条数据之间的间隔虚线
         drawYDashLine(canvas)
@@ -331,7 +331,7 @@ class CanvasChartView(context: Context, attributes: AttributeSet?, defStyleAttr:
             val startX = markWidth * (index - startIndex + 1) - dashLineWidth / 2
             path.moveTo(startX, 0f)
             // 减去坐标轴宽度的一半
-            path.lineTo(startX, height.toFloat() - lineWidth)
+            path.lineTo(startX, getRealY(height.toFloat() - lineWidth))
             index++
         }
         // 设置画笔的效果
@@ -424,42 +424,6 @@ class CanvasChartView(context: Context, attributes: AttributeSet?, defStyleAttr:
     }
 
     /**
-     * 平滑到下一个点
-     * */
-    private fun curveTo(index: Int, data: List<ChartBean>, startIndex: Int, xPos: Float, yPos: Float, path: Path) {
-        // 如果是最后一个点，不需要计算
-        if (index + 1 >= data.size) {
-            return
-        }
-        // 结束的点
-        val nextXPos = calculateXPosition(startIndex, index + 1)
-        val nextYPos = calculateYPosition(data[index + 1])
-        val wt = xPos + markWidth / 2
-        path.cubicTo(wt, yPos, wt, nextYPos, nextXPos, nextYPos)
-    }
-
-    /**
-     * 计算item的x坐标
-     * */
-    private fun calculateXPosition(startIndex: Int, index: Int): Float = (markWidth / 2 + (index - startIndex) * markWidth).toFloat()
-
-    /**
-     * 计算每一个数据点在Y轴上的坐标
-     * */
-    private fun calculateYPosition(value: ChartBean): Float {
-        // 计算比例
-        val scale = value.number / yLineMax
-        // 计算y方向上的中心位置
-        val yCenter = if (onlyFirstArea) {
-            height - lineWidth
-        } else {
-            (height - lineWidth) / 2
-        }
-        // 如果小于0
-        return yCenter - yCenter * scale
-    }
-
-    /**
      * 绘制文字
      *
      * */
@@ -480,6 +444,58 @@ class CanvasChartView(context: Context, attributes: AttributeSet?, defStyleAttr:
             // 要把文字自带的间距减去，统一和圆点之间的间距
             canvas.drawText(text, xPos - textWidth / 2, yPos + dotWidth - offset + textSpace, paint)
         }
+
+        // 绘制刻度值的文字
+        // 设置画笔的效果
+        if (showMarkText) {
+            paint.color = markTextColor
+            paint.textSize = markTextSize
+            paint.style = Paint.Style.FILL
+            val markTextWidth = getTextWidth(item.markText)
+            // 文字绘制开始的位置是基线位置，所以要把上移paint.fontMetrics.bottom距离，才能显示完整的文字
+            canvas.drawText(item.markText, xPos - markTextWidth / 2, height.toFloat() - paint.fontMetrics.bottom, paint)
+        }
+    }
+
+    /**
+     * 平滑到下一个点
+     * */
+    private fun curveTo(index: Int, data: List<ChartBean>, startIndex: Int, xPos: Float, yPos: Float, path: Path) {
+        // 如果是最后一个点，不需要计算
+        if (index + 1 >= data.size) {
+            return
+        }
+        // 结束的点
+        val nextXPos = calculateXPosition(startIndex, index + 1)
+        val nextYPos = calculateYPosition(data[index + 1])
+        val wt = xPos + markWidth / 2
+        path.cubicTo(wt, yPos, wt, nextYPos, nextXPos, nextYPos)
+    }
+
+    /**
+     * 计算item的x坐标
+     * */
+    private fun calculateXPosition(startIndex: Int, index: Int): Float =
+            if (dataDotGravity == DataDotGravity.CENTER) {
+                (markWidth / 2 + (index - startIndex) * markWidth).toFloat()
+            } else {
+                (markWidth + (index - startIndex) * markWidth).toFloat()
+            }
+
+    /**
+     * 计算每一个数据点在Y轴上的坐标
+     * */
+    private fun calculateYPosition(value: ChartBean): Float {
+        // 计算比例
+        val scale = value.number / yLineMax
+        // 计算y方向上的中心位置
+        val yCenter = if (onlyFirstArea) {
+            height - lineWidth
+        } else {
+            (height - lineWidth) / 2
+        }
+        // 如果小于0
+        return yCenter - yCenter * scale
     }
 
     /**
@@ -511,6 +527,5 @@ class CanvasChartView(context: Context, attributes: AttributeSet?, defStyleAttr:
         CURVE("curve")
 
     }
-
 
 }

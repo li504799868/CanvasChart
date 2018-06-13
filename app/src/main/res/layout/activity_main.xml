@@ -5,7 +5,6 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    android:padding="20dp"
     tools:context=".MainActivity">
 
     <!--<com.lzp.com.canvaschart.view.CanvasChartView-->
@@ -48,8 +47,9 @@
         app:layout_constraintLeft_toLeftOf="parent"
         app:layout_constraintRight_toRightOf="parent"
         app:layout_constraintTop_toTopOf="parent"
+        app:showMarkText="true"
         app:lineColor="@color/colorAccent"
         app:onlyFirstArea="true"
-        app:showDataDot="false" />
+        app:showDataDot="true" />
 
 </LinearLayout>

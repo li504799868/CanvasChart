@@ -29,6 +29,11 @@ open class BaseScrollerView(context: Context, attributes: AttributeSet?, defStyl
     constructor(context: Context) : this(context, null)
 
     /**
+     * 绘制X轴和Y轴的宽度
+     * */
+    protected var lineWidth = 5f
+
+    /**
      * x轴的刻度间隔
      *
      * 因为x周是可以滑动的，所以只有刻度的数量这一个属性
@@ -45,10 +50,25 @@ open class BaseScrollerView(context: Context, attributes: AttributeSet?, defStyl
      * */
     var yLineMarkCount: Int = 5
 
+    /**
+     * 绘制圆点的位置
+     * */
+    protected var dataDotGravity: DataDotGravity = DataDotGravity.LINE
+
     init {
         val typedArray = context.obtainStyledAttributes(attributes, R.styleable.BaseScrollerView)
+        // 绘制X轴和Y轴的宽度
+        lineWidth = typedArray.getDimensionPixelSize(R.styleable.BaseScrollerView_lineWidth, 5).toFloat()
         // 得到x轴的刻度数
         xLineMarkCount = typedArray.getInt(R.styleable.BaseScrollerView_xLineMarkCount, 5)
+        // 得到y轴的刻度数
+        yLineMarkCount = typedArray.getInt(R.styleable.BaseScrollerView_yLineMarkCount, 5)
+        // 得到绘制数据点的位置
+        dataDotGravity = if (typedArray.getInt(R.styleable.BaseScrollerView_yLineMarkCount, 0) == 0) {
+            DataDotGravity.LINE
+        } else {
+            DataDotGravity.CENTER
+        }
         typedArray.recycle()
     }
 
@@ -88,11 +108,6 @@ open class BaseScrollerView(context: Context, attributes: AttributeSet?, defStyl
     protected var drawOffsetY = 0f
 
     /**
-     * 绘制X轴和Y轴的宽度
-     * */
-    protected var lineWidth = 5f
-
-    /**
      * 是否能滑动
      * */
     private var canScroll: Boolean = false
@@ -125,12 +140,24 @@ open class BaseScrollerView(context: Context, attributes: AttributeSet?, defStyl
         markWidth = ((width - drawOffsetX - lineWidth) / xLineMarkCount).toInt()
         // 得到数据的数量
         val count = adapter?.maxDataCount ?: 0
-        maxWidth = if (count < xLineMarkCount) {
-            canScroll = false
-            width
+        // 如果数据点在中心位置
+        if (dataDotGravity == DataDotGravity.CENTER) {
+            maxWidth = if (count < xLineMarkCount) {
+                canScroll = false
+                width
+            } else {
+                canScroll = true
+                width / xLineMarkCount * count
+            }
         } else {
-            canScroll = true
-            width / xLineMarkCount * count
+            // 如果数据点画在线上，计算是否可以滑动的时候，需要xLineMarkCount - 1
+            maxWidth = if (count < xLineMarkCount - 1) {
+                canScroll = false
+                width
+            } else {
+                canScroll = true
+                width / xLineMarkCount * count
+            }
         }
     }
 
@@ -144,14 +171,18 @@ open class BaseScrollerView(context: Context, attributes: AttributeSet?, defStyl
      * */
     protected fun getDataStartIndex(): Int {
         // 计算已经偏移了几个刻度
-        val index = (offsetX - drawOffsetX - markWidth / 2) / (markWidth)
-        return if (index < 0){
-            0
+        val index = if (dataDotGravity == DataDotGravity.CENTER) {
+            (offsetX - drawOffsetX - markWidth / 2) / (markWidth)
+        } else {
+            (offsetX - drawOffsetX - markWidth) / (markWidth)
         }
-        else{
+        return if (index < 0) {
+            0
+        } else {
             index.toInt()
         }
     }
+
 
     /**
      * 根据偏移值，计算绘制的数据的结束位置
@@ -169,12 +200,26 @@ open class BaseScrollerView(context: Context, attributes: AttributeSet?, defStyl
     protected fun getCanvasOffset(): Float {
         // 计算已经偏移了几个刻度
         val index = getDataStartIndex()
-        // 计算与第一个刻度的偏移值
-        val offset = (offsetX - drawOffsetX) % markWidth
-        return when {
-            index == 0 -> getRealX(-offsetX)
-            offset >= markWidth / 2 -> getRealX(-offsetX) % markWidth
-            else -> getRealX(-offsetX) % markWidth - markWidth
+        if (dataDotGravity == DataDotGravity.CENTER) {
+            // 计算与第一个刻度的偏移值
+            val offset = (offsetX - drawOffsetX) % markWidth
+            return when {
+                index == 0 -> getRealX(-offsetX)
+                offset >= markWidth / 2 -> getRealX(-offsetX) % markWidth
+                else -> getRealX(-offsetX) % markWidth - markWidth
+            }
+        } else {
+            // 计算与第一个刻度的偏移值
+            val offset = (offsetX - drawOffsetX) % markWidth
+            return when {
+                index == 0 -> getRealX(-offsetX)
+                offset == 0f -> {
+                    getRealX(-offsetX) % markWidth
+                }
+                else -> {
+                    getRealX(-offsetX) % markWidth - markWidth
+                }
+            }
         }
     }
 
@@ -216,8 +261,8 @@ open class BaseScrollerView(context: Context, attributes: AttributeSet?, defStyl
             return true
         }
         // 如果已经大于了最右边界
-        else if (offsetX > maxWidth - width - drawOffsetX) {
-            offsetX = maxWidth - width - drawOffsetX
+        else if (offsetX > maxWidth - width + drawOffsetX) {
+            offsetX = maxWidth - width + drawOffsetX
             return true
         }
         return false
@@ -300,6 +345,23 @@ open class BaseScrollerView(context: Context, attributes: AttributeSet?, defStyl
             removeCallbacks(this)
             scroller.abortAnimation()
         }
+
+    }
+
+    /**
+     * 线条Style
+     * */
+    enum class DataDotGravity(val value: String) {
+
+        /**
+         * 线上
+         * */
+        LINE("LINE"),
+
+        /**
+         * 中心
+         * */
+        CENTER("center")
 
     }
 }
