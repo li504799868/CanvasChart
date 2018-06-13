@@ -119,7 +119,7 @@ class CanvasChartView(context: Context, attributes: AttributeSet?, defStyleAttr:
     /**
      * 是否显示刻度值
      * */
-    private var showMarkText = false
+    private var showMarkText = true
 
     /**
      * 刻度文字的大小
@@ -131,6 +131,21 @@ class CanvasChartView(context: Context, attributes: AttributeSet?, defStyleAttr:
      * 刻度文字的颜色
      * */
     private var markTextColor = Color.BLACK
+
+    /**
+     * x轴的刻度值宽度
+     * */
+    private var xMarkTextMaxWidth = 0f
+
+    /**
+     * x轴的留白
+     * */
+    private var xLineSpace = 0f
+
+    /**
+     * Y轴的留白
+     * */
+    private var yLineSpace = 0f
 
     init {
         val typedArray = context.obtainStyledAttributes(attributes, R.styleable.CanvasChartView)
@@ -167,6 +182,12 @@ class CanvasChartView(context: Context, attributes: AttributeSet?, defStyleAttr:
         textSpace = typedArray.getDimensionPixelSize(R.styleable.CanvasChartView_textSpace, 0)
         // 是否只显示第一象限
         onlyFirstArea = typedArray.getBoolean(R.styleable.CanvasChartView_onlyFirstArea, false)
+        // 是否显示刻度文字
+        showMarkText = typedArray.getBoolean(R.styleable.CanvasChartView_showMarkText, false)
+        // 刻度文字的大小
+        markTextSize = typedArray.getDimensionPixelSize(R.styleable.CanvasChartView_markTextSize, 40).toFloat()
+        // 刻度文字的颜色
+        markTextColor = typedArray.getColor(R.styleable.CanvasChartView_markTextColor, Color.BLACK)
         typedArray.recycle()
     }
 
@@ -174,6 +195,10 @@ class CanvasChartView(context: Context, attributes: AttributeSet?, defStyleAttr:
         super.onDraw(canvas)
         // 保存一下canvas的状态
         canvas.save()
+        // y轴刻度值文字的最大宽度
+        paint.textSize = markTextSize
+        xMarkTextMaxWidth = paint.measureText(yLineMax.toString())
+        drawOffsetX = xMarkTextMaxWidth
 
         // 这里要重置一下缓存，因为要开始绘制新的图标了
         pathCacheManager.resetCache()
@@ -247,22 +272,49 @@ class CanvasChartView(context: Context, attributes: AttributeSet?, defStyleAttr:
      * 绘制x轴的虚线
      * */
     private fun drawXDashLine(canvas: Canvas) {
+        // 画条目之间的间隔虚线，从Data的开始位置绘制到结束位置
+        val startX = getRealX(lineWidth)
+        val path = pathCacheManager.get()
+        // 计算每一个y刻度的高度
+        val yMarkHeight = getRealY(height - lineWidth) / yLineMarkCount
+        // 计算Y轴的留白
+        paint.textSize = markTextSize
+        val fontMetrics = paint.fontMetrics
+        val offset = markTextSize / 2
+        yLineSpace = offset
+        // 开始绘制
+        for (it in 0..4) {
+            path.moveTo(startX, yMarkHeight * it + yLineSpace)
+            // 减去坐标轴宽度的一半
+            path.lineTo(width.toFloat(), yMarkHeight * it + yLineSpace)
+            drawYMarkText(canvas, it, markTextSize - fontMetrics.descent)
+        }
         // 设置画笔的效果
         paint.color = dashLineColor
         paint.strokeWidth = dashLineWidth
         paint.pathEffect = DashPathEffect(floatArrayOf(10f, 10f), 1f)
-        // 画条目之间的间隔虚线，从Data的开始位置绘制到结束位置
-        val startX = getRealX( lineWidth)
-        val path = pathCacheManager.get()
-        // 计算每一个y刻度的高度
-        val yMarkHeight = getRealY(height - lineWidth) / yLineMarkCount
-
-        for (it in 0..4) {
-            path.moveTo(startX, yMarkHeight * it)
-            // 减去坐标轴宽度的一半
-            path.lineTo(width.toFloat(), yMarkHeight * it)
-        }
+        paint.style = Paint.Style.STROKE
         canvas.drawPath(path, paint)
+        // 绘制Y轴刻度值
+        drawYMarkText(canvas, 5, 0f)
+    }
+
+    /**
+     * 绘制X轴的文字
+     * */
+    private fun drawYMarkText(canvas: Canvas, index: Int, yLineSpace: Float) {
+        if (!showMarkText) {
+            return
+        }
+        // 设置画笔的效果
+        paint.color = markTextColor
+        paint.textSize = markTextSize
+        paint.pathEffect = null
+        paint.style = Paint.Style.FILL
+        val text = (yLineMax - index * yLineMax / yLineMarkCount).toString()
+        canvas.drawText(text,
+                0f, getRealY(height.toFloat()) / yLineMarkCount * index + yLineSpace,
+                paint)
     }
 
     /**
@@ -282,6 +334,11 @@ class CanvasChartView(context: Context, attributes: AttributeSet?, defStyleAttr:
             path.lineTo(startX, height.toFloat() - lineWidth)
             index++
         }
+        // 设置画笔的效果
+        paint.color = dashLineColor
+        paint.strokeWidth = dashLineWidth
+        paint.pathEffect = DashPathEffect(floatArrayOf(10f, 10f), 1f)
+        paint.style = Paint.Style.STROKE
         canvas.drawPath(path, paint)
     }
 

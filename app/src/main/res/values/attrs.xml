@@ -42,6 +42,12 @@
         <attr name="textColor" format="color" />
         <!-- 文字和圆点之间的间距 -->
         <attr name="textSpace" format="dimension" />
+        <!-- 是否显示刻度文字 -->
+        <attr name="showMarkText" format="boolean"/>
+        <!-- 刻度文字大小 -->
+        <attr name="markTextSize" format="dimension"/>
+        <!-- 刻度文字颜色 -->
+        <attr name="markTextColor" format="color"/>
     </declare-styleable>
 
 </resources>

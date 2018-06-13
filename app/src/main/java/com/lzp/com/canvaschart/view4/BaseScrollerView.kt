@@ -80,12 +80,12 @@ open class BaseScrollerView(context: Context, attributes: AttributeSet?, defStyl
     /**
      * 绘制Y轴的偏移值，这个值用来绘制Y轴的文字
      * */
-    private var drawOffsetX = 50f
+    protected var drawOffsetX = 0f
 
     /**
      * 绘制X轴的偏移值，这个值用来绘制X轴下面的文字
      * */
-    private var drawOffsetY = 50f
+    protected var drawOffsetY = 0f
 
     /**
      * 绘制X轴和Y轴的宽度
@@ -145,7 +145,12 @@ open class BaseScrollerView(context: Context, attributes: AttributeSet?, defStyl
     protected fun getDataStartIndex(): Int {
         // 计算已经偏移了几个刻度
         val index = (offsetX - drawOffsetX - markWidth / 2) / (markWidth)
-        return index.toInt()
+        return if (index < 0){
+            0
+        }
+        else{
+            index.toInt()
+        }
     }
 
     /**
