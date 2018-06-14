@@ -283,7 +283,7 @@ class CanvasChartView(context: Context, attributes: AttributeSet?, defStyleAttr:
         val offset = markTextSize / 2
         yLineSpace = offset
         // 开始绘制
-        for (it in 0..4) {
+        for (it in 0 until yLineMarkCount - 1) {
             path.moveTo(startX, yMarkHeight * it + yLineSpace)
             // 减去坐标轴宽度的一半
             path.lineTo(width.toFloat(), yMarkHeight * it + yLineSpace)
