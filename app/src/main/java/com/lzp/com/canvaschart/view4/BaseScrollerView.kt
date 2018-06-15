@@ -64,7 +64,7 @@ open class BaseScrollerView(context: Context, attributes: AttributeSet?, defStyl
         // 得到y轴的刻度数
         yLineMarkCount = typedArray.getInt(R.styleable.BaseScrollerView_yLineMarkCount, 5)
         // 得到绘制数据点的位置
-        dataDotGravity = if (typedArray.getInt(R.styleable.BaseScrollerView_yLineMarkCount, 0) == 0) {
+        dataDotGravity = if (typedArray.getInt(R.styleable.BaseScrollerView_dataDotGravity, 0) == 0) {
             DataDotGravity.LINE
         } else {
             DataDotGravity.CENTER
@@ -95,7 +95,7 @@ open class BaseScrollerView(context: Context, attributes: AttributeSet?, defStyl
     /**
      * 每个刻度的宽度
      * */
-    protected var markWidth: Int = 0
+    protected var markWidth: Float = 0f
 
     /**
      * 绘制Y轴的偏移值，这个值用来绘制Y轴的文字
@@ -137,7 +137,7 @@ open class BaseScrollerView(context: Context, attributes: AttributeSet?, defStyl
      * */
     private fun calculateMaxWidth() {
         // 计算每一个刻度的宽度
-        markWidth = ((width - drawOffsetX - lineWidth) / xLineMarkCount).toInt()
+        markWidth = (width - drawOffsetX - lineWidth) / xLineMarkCount
         // 得到数据的数量
         val count = adapter?.maxDataCount ?: 0
         // 如果数据点在中心位置
@@ -200,22 +200,32 @@ open class BaseScrollerView(context: Context, attributes: AttributeSet?, defStyl
     protected fun getCanvasOffset(): Float {
         // 计算已经偏移了几个刻度
         val index = getDataStartIndex()
-        if (dataDotGravity == DataDotGravity.CENTER) {
-            // 计算与第一个刻度的偏移值
-            val offset = (offsetX - drawOffsetX) % markWidth
-            return when {
-                index == 0 -> getRealX(-offsetX)
-                offset >= markWidth / 2 -> getRealX(-offsetX) % markWidth
-                else -> getRealX(-offsetX) % markWidth - markWidth
-            }
-        } else {
-            // 计算与第一个刻度的偏移值
-            val offset = (offsetX - drawOffsetX) % markWidth
-            return when {
-                index == 0 -> getRealX(-offsetX)
-                offset == 0f -> {
+        // 计算与第一个刻度的偏移值
+        // 请注意这个偏移值值得刻度的虚线的偏移值，不是圆点的偏移值
+        val offset = (offsetX - drawOffsetX) % markWidth
+        when {
+            // 如果是第一个刻度，直接返回偏移值
+            index == 0 -> return getRealX(-offsetX)
+            // 当绘制数据点的位置刻度的中心
+            dataDotGravity == DataDotGravity.CENTER -> return when {
+                // 如果正好滑动了当前绘制的第一个点，绘制的第一条虚线变成了之后的第一条虚线
+                // 直接返回偏移值就可以了
+                offset >= markWidth / 2 -> {
                     getRealX(-offsetX) % markWidth
                 }
+                // 刻度到下一个圆点的距离，绘制虚线还是上一个刻度
+                // 因为要绘制与上一条的连线，所有要多减去一个刻度的宽度
+                else -> {
+                    getRealX(-offsetX) % markWidth - markWidth
+                }
+            }
+            // 当绘制数据点的位置刻度的线上
+            else -> return when (offset) {
+                // 如果正好滑动了虚线的位置，不需要偏移值
+                0f -> {
+                    getRealX(-offsetX) % markWidth
+                }
+                // 其他情况都要绘制和上一条的虚线，所有要多减去一个刻度的宽度
                 else -> {
                     getRealX(-offsetX) % markWidth - markWidth
                 }

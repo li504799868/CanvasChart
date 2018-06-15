@@ -43,13 +43,14 @@
         app:chartLineColor="@color/colorPrimary"
         app:chartLineStyle="linear"
         app:dashLineColor="@color/colorPrimaryDark"
+        app:dataDotGravity="center"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintLeft_toLeftOf="parent"
         app:layout_constraintRight_toRightOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        app:showMarkText="true"
         app:lineColor="@color/colorAccent"
         app:onlyFirstArea="true"
-        app:showDataDot="true" />
+        app:showDataDot="true"
+        app:showMarkText="true" />
 
 </LinearLayout>

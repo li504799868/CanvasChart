@@ -259,11 +259,6 @@ class CanvasChartView(context: Context, attributes: AttributeSet?, defStyleAttr:
     private fun drawYLine(canvas: Canvas) {
         // 计算一下X方向的偏移值
         val offsetX = getRealX(lineWidth / 2)
-        if (onlyFirstArea) {
-
-        } else {
-
-        }
         // 绘制Y轴
         canvas.drawLine(offsetX, getRealY(0f), offsetX, getRealY(height.toFloat()), paint)
     }
@@ -477,9 +472,9 @@ class CanvasChartView(context: Context, attributes: AttributeSet?, defStyleAttr:
      * */
     private fun calculateXPosition(startIndex: Int, index: Int): Float =
             if (dataDotGravity == DataDotGravity.CENTER) {
-                (markWidth / 2 + (index - startIndex) * markWidth).toFloat()
+                markWidth / 2 + (index - startIndex) * markWidth
             } else {
-                (markWidth + (index - startIndex) * markWidth).toFloat()
+                markWidth + (index - startIndex) * markWidth
             }
 
     /**
