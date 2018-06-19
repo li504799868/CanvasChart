@@ -1,11 +1,10 @@
-package com.lzp.com.canvaschart.view4
+package com.lzp.chart
 
 import android.content.Context
 import android.graphics.*
 import android.util.AttributeSet
 import android.util.LruCache
-import com.lzp.com.canvaschart.R
-import com.lzp.com.canvaschart.base.ChartBean
+import com.lzp.chart.base.ChartBean
 
 
 /**
@@ -202,17 +201,18 @@ class CanvasChartView(context: Context, attributes: AttributeSet?, defStyleAttr:
 
         // 这里要重置一下缓存，因为要开始绘制新的图标了
         pathCacheManager.resetCache()
-
         // 绘制X轴和Y轴
         drawXYLine(canvas)
         // 绘制X轴的虚线
         drawXDashLine(canvas)
+        if (adapter == null) {
+            return
+        }
         // 从这里开始，我们要对canvas进行偏移
         canvas.translate(getCanvasOffset() + lineWidth, -lineWidth)
         // 裁剪要绘制的区域
         // 裁剪的区域坐标记得减去偏移值，修正裁剪的位置
         canvas.clipRect(getRealX(lineWidth - getCanvasOffset()), 0f, width.toFloat() - getCanvasOffset(), height.toFloat())
-
         // 绘制每一条数据之间的间隔虚线
         drawYDashLine(canvas)
         // 绘制数据
@@ -278,7 +278,7 @@ class CanvasChartView(context: Context, attributes: AttributeSet?, defStyleAttr:
         val offset = markTextSize / 2
         yLineSpace = offset
         // 开始绘制
-        for (it in 0 until yLineMarkCount - 1) {
+        for (it in 0 until yLineMarkCount) {
             path.moveTo(startX, yMarkHeight * it + yLineSpace)
             // 减去坐标轴宽度的一半
             path.lineTo(width.toFloat(), yMarkHeight * it + yLineSpace)

@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    tools:context=".MainActivity">
+
+    <com.lzp.chart.CanvasChartView
+        android:id="@+id/canvas_chart_4"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        app:chartLineColor="@color/colorPrimary"
+        app:chartLineStyle="curve"
+        app:dashLineColor="@color/colorPrimaryDark"
+        app:dataDotGravity="center"
+        app:lineColor="@color/colorAccent"
+        app:onlyFirstArea="true"
+        app:showDataDot="true"
+        app:showMarkText="true" />
+
+</LinearLayout>

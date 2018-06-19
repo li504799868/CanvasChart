@@ -1,4 +1,4 @@
-package com.lzp.com.canvaschart.view4
+package com.lzp.chart
 
 import android.annotation.SuppressLint
 import android.content.Context
@@ -9,8 +9,7 @@ import android.view.GestureDetector
 import android.view.MotionEvent
 import android.view.View
 import android.widget.OverScroller
-import com.lzp.com.canvaschart.R
-import com.lzp.com.canvaschart.base.BaseDataAdapter
+import com.lzp.chart.base.BaseDataAdapter
 
 
 /**

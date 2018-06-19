@@ -1,10 +1,9 @@
 package com.lzp.com.canvaschart
 
-import android.support.v7.app.AppCompatActivity
 import android.os.Bundle
+import android.support.v7.app.AppCompatActivity
 import com.lzp.com.canvaschart.base.BaseDataAdapter
 import com.lzp.com.canvaschart.base.ChartBean
-import kotlinx.android.synthetic.main.activity_main.*
 
 class MainActivity : AppCompatActivity() {
 
@@ -56,9 +55,8 @@ class MainActivity : AppCompatActivity() {
 
 //        canvas_chart_1.adapter = adapter
 //        canvas_chart_2.adapter = adapter
-//        canvas_chart_3.adapter = adapter
+        canvas_chart_3.adapter = adapter
 
-        canvas_chart_4.adapter = adapter
 //        canvas_chart.setOnClickListener({
 //            adapter.addData(listOf(ChartBean(-15f, "afgy"),
 //                    ChartBean(-27f, "afgy"),

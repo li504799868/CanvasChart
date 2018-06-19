@@ -1,4 +1,4 @@
-package com.lzp.com.canvaschart.view4
+package com.lzp.chart
 
 import android.graphics.Path
 
