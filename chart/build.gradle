@@ -31,17 +31,21 @@ dependencies {
     testImplementation 'junit:junit:4.12'
     androidTestImplementation 'com.android.support.test:runner:1.0.2'
     androidTestImplementation 'com.android.support.test.espresso:espresso-core:3.0.2'
-    compile "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
+    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
+}
+
+sourceSets {
+    main.java.srcDirs += 'src/main/kotlin'
 }
 
 // jcenter发布的信息
 publish {
-    userOrg = 'lzp' //bintray.com用户名
-    groupId = 'com.lzp' //jcenter上的路径
+    userOrg = 'lizp' // 创建repo的位置
+    groupId = 'com.lzp' // 引用的分组名称
     artifactId = 'CanvasChartView'//项目名称
     publishVersion = '1.0.0'//版本号
-    desc = ''//描述，不重要
-    website = 'https://github.com/li504799868/CanvasChart'//网站，不重要；尽量模拟github上的地址，例如我这样的；当然你有地址最好了
+    desc = 'desc'
+    website = 'https://github.com/li504799868/CanvasChart'
 }
 
 repositories {

@@ -20,9 +20,21 @@ allprojects {
     repositories {
         google()
         jcenter()
+        maven{url 'https://dl.bintray.com/lizp/maven/'}
+    }
+
+    tasks.withType(Javadoc) {
+        options{
+            encoding "UTF-8"
+            charSet 'UTF-8'
+            links "http://docs.oracle.com/javase/7/docs/api"
+        }
     }
 }
 
 task clean(type: Delete) {
     delete rootProject.buildDir
 }
+
+//非常重要要不它不认识你的项目.kt文件名 其中chart是你的library名
+tasks.getByPath(":chart:releaseAndroidJavadocs").enabled = false
