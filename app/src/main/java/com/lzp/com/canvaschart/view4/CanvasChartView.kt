@@ -295,7 +295,7 @@ class CanvasChartView(context: Context, attributes: AttributeSet?, defStyleAttr:
     }
 
     /**
-     * 绘制X轴的文字
+     * 绘制Y轴的文字
      * */
     private fun drawYMarkText(canvas: Canvas, index: Int, yLineSpace: Float) {
         if (!showMarkText) {

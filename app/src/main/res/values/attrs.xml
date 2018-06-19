@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
-    <!-- CanvasChartView的自定义属性 -->
+    <!-- BaseScrollerView的自定义属性 -->
     <declare-styleable name="BaseScrollerView">
         <!-- x轴显示的刻度的个数 -->
         <attr name="xLineMarkCount" format="integer" />
