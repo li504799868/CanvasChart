@@ -120,3 +120,5 @@ adapter.addData(listOf(ChartBean(10f, "afgy", "ggg"),
 
 </resources>
 ```
+如果觉得对您有帮助，欢迎打赏一个猪蹄~<br />
+<img width="200" height="200" src="https://img-blog.csdn.net/2018061918594334?watermark/2/text/aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3UwMTEzMTU5NjA=/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70"/>
