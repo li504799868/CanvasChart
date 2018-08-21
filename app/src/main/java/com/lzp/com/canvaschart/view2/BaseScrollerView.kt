@@ -235,6 +235,7 @@ open class BaseScrollerView(context: Context, attributes: AttributeSet?, defStyl
 
     override fun computeScroll() {
         // 第三步，重写computeScroll()方法，并在其内部完成平滑滚动的逻辑
+        Log.e("lzp", "scroll finish  :${scroller.computeScrollOffset()}")
         if (scroller.computeScrollOffset()) {
             offsetX = scroller.currX.toFloat()
             Log.e("lzp", "currX is :${scroller.currX}")

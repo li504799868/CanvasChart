@@ -11,17 +11,17 @@
     <!--android:layout_width="match_parent"-->
     <!--android:layout_height="match_parent" />-->
 
-    <!--<com.lzp.com.canvaschart.view2.CanvasChartView-->
-    <!--android:id="@+id/canvas_chart_2"-->
-    <!--android:layout_width="match_parent"-->
-    <!--android:layout_height="0dp"-->
-    <!--android:layout_marginTop="20dp"-->
-    <!--android:layout_weight="1" />-->
+    <com.lzp.com.canvaschart.view2.CanvasChartView
+    android:id="@+id/canvas_chart_2"
+    android:layout_width="match_parent"
+    android:layout_height="0dp"
+    android:layout_marginTop="20dp"
+    android:layout_weight="1" />
 
-    <com.lzp.com.canvaschart.view3.CanvasChartView
-        android:id="@+id/canvas_chart_3"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent" />
+    <!--<com.lzp.com.canvaschart.view3.CanvasChartView-->
+    <!--android:id="@+id/canvas_chart_3"-->
+    <!--android:layout_width="match_parent"-->
+    <!--android:layout_height="match_parent" />-->
 
 
 </LinearLayout>

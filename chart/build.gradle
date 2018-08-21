@@ -44,7 +44,7 @@ publish {
     groupId = 'com.lzp' // 引用的分组名称
     artifactId = 'CanvasChartView'//项目名称
     publishVersion = '1.0.0'//版本号
-    desc = 'desc'
+    desc = '自定义图标View'
     website = 'https://github.com/li504799868/CanvasChart'
 }
 
